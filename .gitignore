@@ -1,0 +1,41 @@
+# --- General ---
+.DS_Store
+node_modules/
+dist/
+.env
+*.log
+*.tmp
+*.swp
+
+# --- Vite ---
+.vite/
+.cache/
+*.local
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- Solana / Anchor ---
+target/
+programs/*/target/
+**/program-id.json
+.macaroon
+.solana/
+**/keys/*.json
+
+# --- VSCode / IDEs ---
+.vscode/
+.idea/
+*.code-workspace
+
+# --- Test Outputs ---
+coverage/
+*.lcov
+
+# --- Build Artifacts ---
+/build/
+/out/
+/generated/
+
+# --- OS ---
+Thumbs.db

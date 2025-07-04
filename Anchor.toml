@@ -1,0 +1,36 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.devnet]
+fee_rewards = "FeeReward111111111111111111111111111111111111"
+holder_distribution = "HolderDist1111111111111111111111111111111111111"
+lp_custody = "LPCustody1111111111111111111111111111111111111"
+project_status_tracker = "StatusTrack1111111111111111111111111111111111111"
+
+[programs.mainnet]
+fee_rewards = "FeeReward111111111111111111111111111111111111"
+holder_distribution = "HolderDist1111111111111111111111111111111111111"
+lp_custody = "LPCustody1111111111111111111111111111111111111"
+project_status_tracker = "StatusTrack1111111111111111111111111111111111111"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[workspace]
+members = [
+    "programs/fee-rewards",
+    "programs/holder-distribution", 
+    "programs/lp-custody",
+    "programs/project-status-tracker"
+]
+
+[build]
+dockerfile = "Dockerfile"
