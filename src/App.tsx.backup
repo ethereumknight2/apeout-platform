@@ -13,10 +13,6 @@ import LaunchToken from "./components/TokenLaunch";
 import TokenDetail from "./components/TokenDetailPage";
 import { AppProvider } from "./context/AppContext";
 
-// Import our new enhanced components
-import EnhancedProjectStatus from "./components/EnhancedProjectStatus";
-import EnhancedFeeRewards from "./components/EnhancedFeeRewards";
-
 import "./styles.css";
 
 // Type definitions
@@ -69,7 +65,9 @@ const mockTokenData = {
 function App() {
   // State using React.useState to avoid conflicts
   const [activeView, setActiveView] = React.useState<ViewType>("dashboard");
-const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | null>(null);
+  const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<
+    string | null
+  >(null);
 
   // Snapshot info with proper typing
   const snapshotInfo = {
@@ -149,13 +147,8 @@ const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | nu
               </section>
 
               <section className="section">
-                <h2>📈 Trading Fee Rewards (Original)</h2>
+                <h2>📈 Trading Fee Rewards</h2>
                 <FeeRewardClaim dayId={1} />
-              </section>
-
-              <section className="section">
-                <h2>🔥 Enhanced Fee Rewards (With Blockchain)</h2>
-                <EnhancedFeeRewards dayId={Math.floor(Date.now() / 86400000)} />
               </section>
 
               <section className="section">
@@ -195,23 +188,7 @@ const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | nu
 
         {activeView === "status" && (
           <section className="section">
-            <div className="status-grid">
-              {/* New Enhanced Status Components */}
-              <EnhancedProjectStatus 
-                tokenMint={APEOUT_TOKEN_MINT.toString()}
-                tokenName="ApeOut Token"
-                tokenSymbol="APEOUT"
-              />
-              
-              <EnhancedProjectStatus 
-                tokenMint={SAMPLE_TOKEN_MINT.toString()}
-                tokenName="Wrapped SOL"
-                tokenSymbol="wSOL"
-              />
-              
-              {/* Original Project Status Dashboard */}
-              <ProjectStatusDashboard />
-            </div>
+            <ProjectStatusDashboard />
           </section>
         )}
 
