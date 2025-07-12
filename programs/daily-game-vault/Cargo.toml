@@ -1,0 +1,19 @@
+[package]
+name = "daily-game-vault"
+version = "0.1.0"
+description = "Daily gamified rewards system for trading competitions"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "daily_game_vault"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.28.0", features = ["derive"] }

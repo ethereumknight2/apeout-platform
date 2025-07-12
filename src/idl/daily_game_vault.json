@@ -1,0 +1,245 @@
+{
+  "version": "0.1.0",
+  "name": "daily_game_vault",
+  "instructions": [
+    {
+      "name": "initializeDay",
+      "docs": [
+        "Initialize daily game vault for a specific day"
+      ],
+      "accounts": [
+        {
+          "name": "dailyGameVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "dayId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "recordActivity",
+      "docs": [
+        "Manual record activity (for backend updates)"
+      ],
+      "accounts": [
+        {
+          "name": "dailyGameVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "category",
+          "type": "u8"
+        },
+        {
+          "name": "participant",
+          "type": "publicKey"
+        },
+        {
+          "name": "metricValue",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claimGameReward",
+      "docs": [
+        "Claim daily game reward for a specific category (weighted rewards)"
+      ],
+      "accounts": [
+        {
+          "name": "dailyGameVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "claimRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "category",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "getCategoryWinner",
+      "docs": [
+        "Get category winner info"
+      ],
+      "accounts": [
+        {
+          "name": "dailyGameVault",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "category",
+          "type": "u8"
+        }
+      ],
+      "returns": {
+        "option": "publicKey"
+      }
+    },
+    {
+      "name": "addRewards",
+      "docs": [
+        "Add rewards to the vault (called by fee_rewards contract)"
+      ],
+      "accounts": [
+        {
+          "name": "dailyGameVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DailyGameVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dayId",
+            "type": "u64"
+          },
+          {
+            "name": "totalRewards",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "mostTradedToken",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "lpMvp",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "earlyBuyer",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "smartMoney",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "profitChampion",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "GameClaimRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "category",
+            "type": "u8"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "claimTime",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NotWinner",
+      "msg": "You are not the winner in this category."
+    },
+    {
+      "code": 6001,
+      "name": "InvalidCategory",
+      "msg": "Invalid reward category."
+    },
+    {
+      "code": 6002,
+      "name": "AlreadyClaimed",
+      "msg": "Reward already claimed for this category."
+    },
+    {
+      "code": 6003,
+      "name": "NoRewardsAvailable",
+      "msg": "No rewards available in vault."
+    }
+  ]
+}

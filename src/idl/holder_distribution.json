@@ -1,0 +1,151 @@
+{
+  "version": "0.1.0",
+  "name": "holder_distribution",
+  "instructions": [
+    {
+      "name": "initializeDistribution",
+      "accounts": [
+        {
+          "name": "distributionState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "totalDistribution",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claimLp",
+      "accounts": [
+        {
+          "name": "distributionState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userClaimRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "userTokenBalance",
+          "type": "u64"
+        },
+        {
+          "name": "totalSupplyAtSnapshot",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DistributionState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalLp",
+            "type": "u64"
+          },
+          {
+            "name": "claimedLp",
+            "type": "u64"
+          },
+          {
+            "name": "snapshotTime",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimed",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "AlreadyClaimed",
+      "msg": "User has already claimed rewards."
+    },
+    {
+      "code": 6001,
+      "name": "NothingToClaim",
+      "msg": "No rewards to claim."
+    },
+    {
+      "code": 6002,
+      "name": "AllRewardsClaimed",
+      "msg": "All rewards have been claimed."
+    }
+  ]
+}

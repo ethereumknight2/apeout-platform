@@ -1,0 +1,26 @@
+[package]
+name = "category-tracker"
+version = "0.1.0"
+description = "Real-time tracking system for daily ApeOut competition categories"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/your-org/apeout-contracts"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "category_tracker"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.28.0", features = ["derive", "init-if-needed"] }
+
+[dev-dependencies]
+anchor-client = "0.28.0"
+solana-sdk = "~1.16.0"
+tokio = { version = "1.0", features = ["macros"] }

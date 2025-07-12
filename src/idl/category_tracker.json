@@ -1,0 +1,614 @@
+{
+  "version": "0.1.0",
+  "name": "category_tracker",
+  "instructions": [
+    {
+      "name": "initializeDayTracking",
+      "docs": [
+        "Initialize daily tracking for a specific day"
+      ],
+      "accounts": [
+        {
+          "name": "dailyTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "dayId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initializeTokenTracker",
+      "docs": [
+        "Initialize token volume tracker"
+      ],
+      "accounts": [
+        {
+          "name": "tokenVolumeTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "tokenMint",
+          "type": "publicKey"
+        },
+        {
+          "name": "creator",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "initializeLpTracker",
+      "docs": [
+        "Initialize LP tracker"
+      ],
+      "accounts": [
+        {
+          "name": "lpTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lpProvider",
+          "type": "publicKey"
+        },
+        {
+          "name": "dayId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initializeEarlyBuyTracker",
+      "docs": [
+        "Initialize early buy tracker"
+      ],
+      "accounts": [
+        {
+          "name": "earlyBuyTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "buyer",
+          "type": "publicKey"
+        },
+        {
+          "name": "tokenMint",
+          "type": "publicKey"
+        },
+        {
+          "name": "dayId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initializeTradingTracker",
+      "docs": [
+        "Initialize trading tracker"
+      ],
+      "accounts": [
+        {
+          "name": "tradingTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "trader",
+          "type": "publicKey"
+        },
+        {
+          "name": "dayId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initializeProfitTracker",
+      "docs": [
+        "Initialize profit tracker"
+      ],
+      "accounts": [
+        {
+          "name": "profitTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "trader",
+          "type": "publicKey"
+        },
+        {
+          "name": "dayId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "recordTokenTrade",
+      "docs": [
+        "Track token creation and trading volume for Most Traded Token category"
+      ],
+      "accounts": [
+        {
+          "name": "tokenVolumeTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "dailyTracker",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "volumeDelta",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "recordLpProvision",
+      "docs": [
+        "Track LP provision for LP MVP category"
+      ],
+      "accounts": [
+        {
+          "name": "lpTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "dailyTracker",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "liquidityAdded",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "recordEarlyBuy",
+      "docs": [
+        "Track early buying for Early Buyer category"
+      ],
+      "accounts": [
+        {
+          "name": "earlyBuyTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "dailyTracker",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "purchaseOrder",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "recordTradeOutcome",
+      "docs": [
+        "Track trading performance for Smart Money category"
+      ],
+      "accounts": [
+        {
+          "name": "tradingTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "dailyTracker",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "isProfitable",
+          "type": "bool"
+        },
+        {
+          "name": "profitLoss",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "recordProfit",
+      "docs": [
+        "Track profit for Profit Champion category"
+      ],
+      "accounts": [
+        {
+          "name": "profitTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "dailyTracker",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "buyAmount",
+          "type": "u64"
+        },
+        {
+          "name": "sellAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "getDailyLeaders",
+      "docs": [
+        "Get current daily leaders for integration with daily_game_vault"
+      ],
+      "accounts": [
+        {
+          "name": "dailyTracker",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "returns": {
+        "defined": "DailyLeaders"
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DailyTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dayId",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "mostTradedTokenLeader",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "mostTradedVolume",
+            "type": "u64"
+          },
+          {
+            "name": "lpMvpLeader",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "lpMvpAmount",
+            "type": "u64"
+          },
+          {
+            "name": "earlyBuyerLeader",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "earlyBuyerPoints",
+            "type": "u32"
+          },
+          {
+            "name": "smartMoneyLeader",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "smartMoneyWinRate",
+            "type": "u32"
+          },
+          {
+            "name": "profitChampionLeader",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "profitChampionAmount",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenVolumeTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalVolume",
+            "type": "u64"
+          },
+          {
+            "name": "uniqueTraders",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LPTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "provider",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalLiquidity",
+            "type": "u64"
+          },
+          {
+            "name": "poolsCount",
+            "type": "u32"
+          },
+          {
+            "name": "dayId",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EarlyBuyTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "buyer",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "purchaseOrder",
+            "type": "u32"
+          },
+          {
+            "name": "totalPoints",
+            "type": "u32"
+          },
+          {
+            "name": "dayId",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TradingTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "trader",
+            "type": "publicKey"
+          },
+          {
+            "name": "wins",
+            "type": "u32"
+          },
+          {
+            "name": "losses",
+            "type": "u32"
+          },
+          {
+            "name": "winRate",
+            "type": "u32"
+          },
+          {
+            "name": "totalProfit",
+            "type": "u64"
+          },
+          {
+            "name": "totalLoss",
+            "type": "u64"
+          },
+          {
+            "name": "dayId",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProfitTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "trader",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalSpent",
+            "type": "u64"
+          },
+          {
+            "name": "totalReceived",
+            "type": "u64"
+          },
+          {
+            "name": "netProfit",
+            "type": "i64"
+          },
+          {
+            "name": "dayId",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "DailyLeaders",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mostTradedToken",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "lpMvp",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "earlyBuyer",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "smartMoney",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "profitChampion",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "TooLateForEarlyBuyer",
+      "msg": "Purchase order too high for early buyer category (max 10)."
+    },
+    {
+      "code": 6001,
+      "name": "InsufficientTrades",
+      "msg": "Minimum 5 trades required for Smart Money category."
+    }
+  ]
+}

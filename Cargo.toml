@@ -1,9 +1,13 @@
 [workspace]
 members = [
     "programs/fee-rewards",
-    "programs/holder-distribution",
-    "programs/lp-custody", 
-    "programs/project-status-tracker"
+    "programs/holder-distribution", 
+    "programs/lp-custody",
+    "programs/project-status-tracker",
+    "programs/daily-game-vault",
+    "programs/category-tracker",
+    "programs/apeout-swap",
+    "programs/token-launcher"
 ]
 resolver = "2"
 

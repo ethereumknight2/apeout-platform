@@ -1,0 +1,313 @@
+{
+  "version": "0.1.0",
+  "name": "token_launcher",
+  "instructions": [
+    {
+      "name": "launchToken",
+      "docs": [
+        "Launch a new token with immediate LP creation and custody lock"
+      ],
+      "accounts": [
+        {
+          "name": "launchData",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "creatorTokenAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "launchTokenTempAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "projectTracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "swapPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "custodyLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "projectStatusTrackerProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "lpCustodyProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "apeoutSwapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        },
+        {
+          "name": "initialSupply",
+          "type": "u64"
+        },
+        {
+          "name": "lpSolAmount",
+          "type": "u64"
+        },
+        {
+          "name": "lpTokenAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "getLaunchInfo",
+      "docs": [
+        "Get launch information for a token"
+      ],
+      "accounts": [
+        {
+          "name": "launchData",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "returns": {
+        "defined": "LaunchInfo"
+      }
+    },
+    {
+      "name": "updateMetadata",
+      "docs": [
+        "Emergency function to update token metadata (creator only)"
+      ],
+      "accounts": [
+        {
+          "name": "launchData",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newName",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "newSymbol",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "newUri",
+          "type": {
+            "option": "string"
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "LaunchData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "initialSupply",
+            "type": "u64"
+          },
+          {
+            "name": "lpSolAmount",
+            "type": "u64"
+          },
+          {
+            "name": "lpTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "launchTime",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "LaunchInfo",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "initialSupply",
+            "type": "u64"
+          },
+          {
+            "name": "lpSolAmount",
+            "type": "u64"
+          },
+          {
+            "name": "lpTokenAmount",
+            "type": "u64"
+          },
+          {
+            "name": "launchTime",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NameTooLong",
+      "msg": "Token name is too long (max 32 characters)."
+    },
+    {
+      "code": 6001,
+      "name": "SymbolTooLong",
+      "msg": "Token symbol is too long (max 10 characters)."
+    },
+    {
+      "code": 6002,
+      "name": "UriTooLong",
+      "msg": "Metadata URI is too long (max 200 characters)."
+    },
+    {
+      "code": 6003,
+      "name": "InvalidSupply",
+      "msg": "Initial supply must be greater than 0."
+    },
+    {
+      "code": 6004,
+      "name": "InsufficientLPFunding",
+      "msg": "Insufficient SOL for LP creation (minimum 0.01 SOL)."
+    },
+    {
+      "code": 6005,
+      "name": "InvalidLPTokenAmount",
+      "msg": "LP token amount must be greater than 0."
+    },
+    {
+      "code": 6006,
+      "name": "UnauthorizedUpdate",
+      "msg": "Only the token creator can update metadata."
+    }
+  ]
+}

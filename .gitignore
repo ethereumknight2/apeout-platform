@@ -39,3 +39,6 @@ coverage/
 
 # --- OS ---
 Thumbs.db
+solana-release/
+solana-release-*.tar.bz2
+*.tar.bz2

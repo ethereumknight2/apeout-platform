@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::clock::Clock;
 
-declare_id!("STaTuSTRaCk11111111111111111111111111111111");
+declare_id!("GRibyZMmqCVuFiXkbVfNQcwvmu6mqhqxhwEHVazaJGj8");
 
 #[program]
 pub mod project_status_tracker {
@@ -88,7 +88,7 @@ pub mod project_status_tracker {
 pub struct InitializeTracker<'info> {
     #[account(init, payer = payer, seeds = [b"tracker", token_mint.key().as_ref()], bump, space = 8 + 32 + 8 + 8 + 8 + 8 + 8 + 1 + 8)]
     pub tracker: Account<'info, ProjectTracker>,
-    /// CHECK: This is just a reference to the token mint
+    /// CHECK: This is just a reference to the token mint, not a full SPL token mint account
     pub token_mint: AccountInfo<'info>,
     #[account(mut)]
     pub payer: Signer<'info>,

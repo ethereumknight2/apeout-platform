@@ -1,0 +1,300 @@
+{
+  "version": "0.1.0",
+  "name": "apeout_swap",
+  "instructions": [
+    {
+      "name": "initSwapPool",
+      "docs": [
+        "Initialize a new swap pool with immediate LP creation"
+      ],
+      "accounts": [
+        {
+          "name": "swapPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creatorTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "custodyLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "custodyProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "tokenAmount",
+          "type": "u64"
+        },
+        {
+          "name": "solAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "executeSwap",
+      "docs": [
+        "Execute a swap (SOL -> Token or Token -> SOL)"
+      ],
+      "accounts": [
+        {
+          "name": "swapPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amountIn",
+          "type": "u64"
+        },
+        {
+          "name": "minimumAmountOut",
+          "type": "u64"
+        },
+        {
+          "name": "isSolToToken",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "getPrice",
+      "docs": [
+        "Get current token price in SOL"
+      ],
+      "accounts": [
+        {
+          "name": "swapPool",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "returns": "u64"
+    },
+    {
+      "name": "addLiquidity",
+      "docs": [
+        "Add liquidity to existing pool (for future use)"
+      ],
+      "accounts": [
+        {
+          "name": "swapPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "tokenAmount",
+          "type": "u64"
+        },
+        {
+          "name": "solAmount",
+          "type": "u64"
+        },
+        {
+          "name": "minLpTokens",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "disablePool",
+      "docs": [
+        "Disable pool (called when token dies)"
+      ],
+      "accounts": [
+        {
+          "name": "swapPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "SwapPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenReserve",
+            "type": "u64"
+          },
+          {
+            "name": "solReserve",
+            "type": "u64"
+          },
+          {
+            "name": "lpMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalLpSupply",
+            "type": "u64"
+          },
+          {
+            "name": "feeRate",
+            "type": "u16"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "PoolInactive",
+      "msg": "Pool is not active."
+    },
+    {
+      "code": 6001,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount provided."
+    },
+    {
+      "code": 6002,
+      "name": "SlippageExceeded",
+      "msg": "Slippage tolerance exceeded."
+    },
+    {
+      "code": 6003,
+      "name": "InsufficientLiquidity",
+      "msg": "Insufficient liquidity in pool."
+    },
+    {
+      "code": 6004,
+      "name": "MathOverflow",
+      "msg": "Mathematical overflow occurred."
+    }
+  ]
+}

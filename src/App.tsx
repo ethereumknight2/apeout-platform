@@ -2,25 +2,29 @@ import React, { useState } from "react";
 import { PublicKey } from "@solana/web3.js";
 import TrendingTicker from "./components/TrendingTicker";
 import TokenDiscovery from "./components/TokenDiscovery";
-import EnhancedStakingDashboard from "./components/EnhancedStakingDashboard";
-import ApeoutStakingDashboard from "./components/ApeoutStakingDashboard";
-import ClaimLPRewards from "./components/ClaimLPRewards";
-import FeeRewardClaim from "./components/FeeRewardClaim";
-import ProjectStatusDashboard from "./components/ProjectStatusDashboard";
 import WalletConnectHeader from "./components/WalletConnectHeader";
 import SwapInterface from "./components/SwapInterface";
 import LaunchToken from "./components/TokenLaunch";
 import TokenDetail from "./components/TokenDetailPage";
-import { AppProvider } from "./context/AppContext";
+import LiveLaunchFeed from "./components/LiveLaunchFeed";
+import DoomCountdown from "./components/DoomCountdown";
+import ProjectStatusDashboard from "./components/ProjectStatusDashboard";
 
-// Import our new enhanced components
+// Enhanced components with real blockchain integration
+import ApeoutStakingDashboard from "./components/ApeoutStakingDashboard"; // Enhanced
+import EnhancedLPClaim from "./components/EnhancedLPClaim"; // Enhanced
+import EnhancedFeeRewards from "./components/EnhancedFeeRewards"; // Enhanced
+import DailyApeOutAwards from "./components/DailyApeOutAwards"; // Enhanced
+
+// Enhanced status components
 import EnhancedProjectStatus from "./components/EnhancedProjectStatus";
-import EnhancedFeeRewards from "./components/EnhancedFeeRewards";
+
+import { AppProvider } from "./context/AppContext";
 
 import "./styles.css";
 
-// Type definitions
-type ViewType = "dashboard" | "trade" | "status" | "launch";
+// Type definitions - Updated to include awards
+type ViewType = "dashboard" | "trade" | "status" | "launch" | "awards";
 
 // Fixed PublicKey creation with proper error handling
 let APEOUT_TOKEN_MINT: PublicKey;
@@ -69,13 +73,9 @@ const mockTokenData = {
 function App() {
   // State using React.useState to avoid conflicts
   const [activeView, setActiveView] = React.useState<ViewType>("dashboard");
-const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | null>(null);
-
-  // Snapshot info with proper typing
-  const snapshotInfo = {
-    timestamp: Math.floor(Date.now() / 1000) - 86400, // 24 hours ago
-    totalSupply: 1000000000,
-  };
+  const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<
+    string | null
+  >(null);
 
   const handleTokenClick = (tokenId: string) => {
     // Handle token click - show detailed view
@@ -93,6 +93,10 @@ const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | nu
     <AppProvider>
       <div className="app">
         <WalletConnectHeader />
+
+        {/* Live Launch Feed - shows across all views */}
+        <LiveLaunchFeed />
+
         <h1 className="main-title">🦍 Welcome to ApeOut</h1>
 
         <div className="app-navigation">
@@ -106,13 +110,19 @@ const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | nu
             className={`nav-btn ${activeView === "dashboard" ? "active" : ""}`}
             onClick={() => setActiveView("dashboard")}
           >
-            📊 Dashboard
+            🔍 Discover Tokens
           </button>
           <button
             className={`nav-btn ${activeView === "trade" ? "active" : ""}`}
             onClick={() => setActiveView("trade")}
           >
             💱 Trade
+          </button>
+          <button
+            className={`nav-btn ${activeView === "awards" ? "active" : ""}`}
+            onClick={() => setActiveView("awards")}
+          >
+            🏆 Daily Awards
           </button>
           <button
             className={`nav-btn ${activeView === "status" ? "active" : ""}`}
@@ -138,29 +148,19 @@ const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | nu
               <TokenDiscovery onTokenClick={handleTokenClick} />
             </section>
 
-            {/* Secondary sections in a grid layout */}
+            {/* Doom Countdown - Critical alerts */}
+            <DoomCountdown />
+
+            {/* Secondary sections in a grid layout - NOW WITH ENHANCED COMPONENTS */}
             <div className="secondary-sections">
               <section className="section">
                 <h2>💰 Claim LP Rewards</h2>
-                <ClaimLPRewards
-                  tokenMint={SAMPLE_TOKEN_MINT}
-                  snapshotInfo={snapshotInfo}
-                />
+                <EnhancedLPClaim />
               </section>
 
               <section className="section">
-                <h2>📈 Trading Fee Rewards (Original)</h2>
-                <FeeRewardClaim dayId={1} />
-              </section>
-
-              <section className="section">
-                <h2>🔥 Enhanced Fee Rewards (With Blockchain)</h2>
+                <h2>🔥 Enhanced Fee Rewards</h2>
                 <EnhancedFeeRewards dayId={Math.floor(Date.now() / 86400000)} />
-              </section>
-
-              <section className="section">
-                <h2>🎖 Staking Dashboard</h2>
-                <EnhancedStakingDashboard />
               </section>
 
               <section className="section">
@@ -193,22 +193,29 @@ const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | nu
           </>
         )}
 
+        {/* ENHANCED AWARDS VIEW - Now uses real blockchain data */}
+        {activeView === "awards" && (
+          <section className="section full-width">
+            <DailyApeOutAwards />
+          </section>
+        )}
+
         {activeView === "status" && (
           <section className="section">
             <div className="status-grid">
-              {/* New Enhanced Status Components */}
-              <EnhancedProjectStatus 
+              {/* Enhanced Status Components */}
+              <EnhancedProjectStatus
                 tokenMint={APEOUT_TOKEN_MINT.toString()}
                 tokenName="ApeOut Token"
                 tokenSymbol="APEOUT"
               />
-              
-              <EnhancedProjectStatus 
+
+              <EnhancedProjectStatus
                 tokenMint={SAMPLE_TOKEN_MINT.toString()}
                 tokenName="Wrapped SOL"
                 tokenSymbol="wSOL"
               />
-              
+
               {/* Original Project Status Dashboard */}
               <ProjectStatusDashboard />
             </div>
@@ -226,6 +233,7 @@ const [selectedTokenDetail, setSelectedTokenDetail] = React.useState<string | nu
               <span>💀 Auto Death Detection</span>
               <span>🎁 Fair Redistribution</span>
               <span>🚀 No Rug Pulls</span>
+              <span>🏆 Daily SOL Awards</span>
             </div>
           </div>
         </footer>

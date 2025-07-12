@@ -1,0 +1,517 @@
+{
+  "version": "0.1.0",
+  "name": "lp_custody",
+  "instructions": [
+    {
+      "name": "initializeLpVault",
+      "docs": [
+        "Initialize LP vault for a new token"
+      ],
+      "accounts": [
+        {
+          "name": "lpVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "depositLpFromSwap",
+      "docs": [
+        "Accept LP tokens from the swap contract (called during token launch)"
+      ],
+      "accounts": [
+        {
+          "name": "lpVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sourceLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "swapPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lpAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "depositLp",
+      "docs": [
+        "Regular LP deposit (for additional liquidity later)"
+      ],
+      "accounts": [
+        {
+          "name": "lpVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "fromLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "prepareLpDistribution",
+      "docs": [
+        "Prepare LP distribution when token is declared dead"
+      ],
+      "accounts": [
+        {
+          "name": "lpVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultLpAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "platformTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "platformTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "swapPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tracker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "apeoutSwapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimHolderLp",
+      "docs": [
+        "Allow individual holders to claim their share of underlying assets"
+      ],
+      "accounts": [
+        {
+          "name": "lpVault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "holderTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "holder",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "claimRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "swapPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "holderTokenBalanceAtDeath",
+          "type": "u64"
+        },
+        {
+          "name": "totalSupplyAtDeath",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "validateSwap",
+      "docs": [
+        "Validate trade direction - block buys for dead tokens"
+      ],
+      "accounts": [
+        {
+          "name": "tracker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "isBuy",
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "LPVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "lpMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "totalLp",
+            "type": "u64"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "lpAvailableForClaims",
+            "type": "u64"
+          },
+          {
+            "name": "totalClaimed",
+            "type": "u64"
+          },
+          {
+            "name": "swapPool",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "solClaimed",
+            "type": "u64"
+          },
+          {
+            "name": "tokensClaimed",
+            "type": "u64"
+          },
+          {
+            "name": "claimTime",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProjectTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "launchTime",
+            "type": "i64"
+          },
+          {
+            "name": "lastTradeTs",
+            "type": "i64"
+          },
+          {
+            "name": "volume3d",
+            "type": "u64"
+          },
+          {
+            "name": "athPrice",
+            "type": "u64"
+          },
+          {
+            "name": "currentPrice",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": "TokenStatus"
+            }
+          },
+          {
+            "name": "deathSnapshotTime",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SwapPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenReserve",
+            "type": "u64"
+          },
+          {
+            "name": "solReserve",
+            "type": "u64"
+          },
+          {
+            "name": "lpMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalLpSupply",
+            "type": "u64"
+          },
+          {
+            "name": "feeRate",
+            "type": "u16"
+          },
+          {
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "TokenStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Warning"
+          },
+          {
+            "name": "Dead"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "TokenIsDead",
+      "msg": "Token is already marked as dead."
+    },
+    {
+      "code": 6001,
+      "name": "TokenStillActive",
+      "msg": "Token is still active and cannot have LP distributed."
+    },
+    {
+      "code": 6002,
+      "name": "BuysDisabledForDeadToken",
+      "msg": "Buys are disabled for dead tokens. Sells are still allowed."
+    },
+    {
+      "code": 6003,
+      "name": "AlreadyPrepared",
+      "msg": "LP distribution already prepared."
+    },
+    {
+      "code": 6004,
+      "name": "AlreadyClaimed",
+      "msg": "Already claimed LP rewards."
+    },
+    {
+      "code": 6005,
+      "name": "NoLPAvailable",
+      "msg": "No LP available for claims."
+    },
+    {
+      "code": 6006,
+      "name": "NoTokensAtDeath",
+      "msg": "User held no tokens at time of death."
+    },
+    {
+      "code": 6007,
+      "name": "ShareTooSmall",
+      "msg": "Calculated share is too small."
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientLP",
+      "msg": "Insufficient LP in vault for this claim."
+    },
+    {
+      "code": 6009,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount provided."
+    },
+    {
+      "code": 6010,
+      "name": "InvalidLPMint",
+      "msg": "LP mint does not match vault configuration."
+    }
+  ]
+}

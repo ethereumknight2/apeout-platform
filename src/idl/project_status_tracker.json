@@ -1,0 +1,169 @@
+{
+  "version": "0.1.0",
+  "name": "project_status_tracker",
+  "instructions": [
+    {
+      "name": "initializeTracker",
+      "accounts": [
+        {
+          "name": "tracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "updateStats",
+      "accounts": [
+        {
+          "name": "tracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "volumeDelta",
+          "type": "u64"
+        },
+        {
+          "name": "currentPrice",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "checkAndFlagDead",
+      "accounts": [
+        {
+          "name": "tracker",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "validateTradeDirection",
+      "accounts": [
+        {
+          "name": "tracker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "isBuy",
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ProjectTracker",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "launchTime",
+            "type": "i64"
+          },
+          {
+            "name": "lastTradeTs",
+            "type": "i64"
+          },
+          {
+            "name": "volume3d",
+            "type": "u64"
+          },
+          {
+            "name": "athPrice",
+            "type": "u64"
+          },
+          {
+            "name": "currentPrice",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": "TokenStatus"
+            }
+          },
+          {
+            "name": "deathSnapshotTime",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "TokenStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Warning"
+          },
+          {
+            "name": "Dead"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "TokenIsDead",
+      "msg": "Token is dead - no more stat updates allowed."
+    },
+    {
+      "code": 6001,
+      "name": "BuysDisabledForDeadToken",
+      "msg": "Token is dead - buys are disabled. Sells are still allowed."
+    }
+  ]
+}
