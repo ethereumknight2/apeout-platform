@@ -1,6 +1,5 @@
 // services/lpClaimService.ts
 import { PublicKey } from '@solana/web3.js';
-// Note: Transaction, SystemProgram, BN, etc. will be imported when we implement real contract calls
 import { useAppContext } from '../context/AppContext';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
@@ -47,15 +46,19 @@ class LPClaimService {
       const { state } = this.context;
       
       // Use the enhanced Anchor version if available
-      if (state.anchorReady && state.anchorPrograms?.projectStatusTracker) {
-        console.log("Using real project status tracker...");
+      if (state.anchorReady && state.anchorPrograms?.lpCustody) {
+        console.log("Using real LP custody contract...");
         
-        // TODO: Implement real dead token fetching
-        // For now, return mock data that looks more realistic
-        return this.getMockClaimableRewards();
+        try {
+          const claimableTokens = await this.fetchClaimableTokensFromChain();
+          return claimableTokens;
+        } catch (error) {
+          console.warn("Failed to fetch claimable tokens from chain:", error);
+          return [];
+        }
       } else {
-        // Use mock data
-        return this.getMockClaimableRewards();
+        console.log("Anchor not ready or LP custody program not available");
+        return [];
       }
 
     } catch (error) {
@@ -65,44 +68,77 @@ class LPClaimService {
   }
 
   /**
-   * Get mock claimable rewards for testing
+   * Fetch claimable tokens from blockchain
    */
-  private getMockClaimableRewards(): LPClaimInfo[] {
-    const mockClaims: LPClaimInfo[] = [
-      {
-        tokenMint: "DeadApe1111111111111111111111111111111111",
-        tokenName: "Dead Ape Token",
-        tokenSymbol: "DAPE",
-        isClaimable: true,
-        userTokenBalanceAtDeath: 15000,
-        totalSupplyAtDeath: 1000000,
-        estimatedSolReward: 0.234,
-        estimatedTokenReward: 120.5,
-        deathTimestamp: Date.now() / 1000 - 86400, // 1 day ago
-        claimDeadline: Date.now() / 1000 + 86400 * 6, // 6 days from now
-        alreadyClaimed: false
-      },
-      {
-        tokenMint: "DeadFrog111111111111111111111111111111111",
-        tokenName: "Dead Frog Token",
-        tokenSymbol: "DFROG",
-        isClaimable: true,
-        userTokenBalanceAtDeath: 8500,
-        totalSupplyAtDeath: 500000,
-        estimatedSolReward: 0.156,
-        estimatedTokenReward: 45.3,
-        deathTimestamp: Date.now() / 1000 - 86400 * 2, // 2 days ago
-        claimDeadline: Date.now() / 1000 + 86400 * 5, // 5 days from now
-        alreadyClaimed: false
-      }
-    ];
-
-    // Check if already claimed using context
+  private async fetchClaimableTokensFromChain(): Promise<LPClaimInfo[]> {
     const { state } = this.context;
-    return mockClaims.map(claim => ({
-      ...claim,
-      alreadyClaimed: state.claimedRewards.has(`LP_${claim.tokenMint}`)
-    }));
+    const claimableTokens: LPClaimInfo[] = [];
+
+    if (!this.wallet.publicKey) {
+      return [];
+    }
+
+    try {
+      // Get all dead token accounts where user has claims
+      const userClaimsPDA = await this.getUserClaimsPDA(this.wallet.publicKey);
+      const userClaimsData = await state.anchorPrograms.lpCustody.account.userClaims.fetch(userClaimsPDA);
+      
+      for (const claim of userClaimsData.claims || []) {
+        if (!claim.claimed && claim.userTokenBalance > 0) {
+          const tokenInfo = await this.getTokenInfo(claim.tokenMint);
+          
+          claimableTokens.push({
+            tokenMint: claim.tokenMint.toString(),
+            tokenName: tokenInfo.name || 'Unknown Token',
+            tokenSymbol: tokenInfo.symbol || 'UNK',
+            isClaimable: true,
+            userTokenBalanceAtDeath: claim.userTokenBalance,
+            totalSupplyAtDeath: claim.totalSupplyAtDeath,
+            estimatedSolReward: claim.estimatedSolReward / 1e9, // Convert lamports to SOL
+            estimatedTokenReward: claim.estimatedTokenReward,
+            deathTimestamp: claim.deathTimestamp,
+            claimDeadline: claim.claimDeadline,
+            alreadyClaimed: state.claimedRewards.has(`LP_${claim.tokenMint.toString()}`)
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user claims:", error);
+    }
+
+    return claimableTokens;
+  }
+
+  /**
+   * Get PDA for user claims account
+   */
+  private async getUserClaimsPDA(userPubkey: PublicKey): Promise<PublicKey> {
+    const { state } = this.context;
+    const [userClaimsPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('user_claims'),
+        userPubkey.toBuffer(),
+      ],
+      state.anchorPrograms.lpCustody.programId
+    );
+    return userClaimsPDA;
+  }
+
+  /**
+   * Get token info (name, symbol) - this could be from metadata or a registry
+   */
+  private async getTokenInfo(tokenMint: PublicKey): Promise<{ name?: string; symbol?: string }> {
+    try {
+      // TODO: Implement actual token metadata fetching
+      // For now, return placeholder data
+      return {
+        name: `Token ${tokenMint.toString().slice(0, 8)}`,
+        symbol: `T${tokenMint.toString().slice(0, 4)}`.toUpperCase()
+      };
+    } catch (error) {
+      console.error("Error fetching token info:", error);
+      return {};
+    }
   }
 
   /**
@@ -127,45 +163,39 @@ class LPClaimService {
       if (state.anchorReady && state.anchorPrograms?.lpCustody) {
         console.log("Using real LP custody contract...");
         
-        // TODO: Implement real LP claim
-        // For now, use the context's existing claim function
-        const signature = await this.context.claimRealLPRewards(
-          tokenMint,
-          userTokenBalanceAtDeath,
-          totalSupplyAtDeath
-        );
-        
-        // Calculate mock claimed amounts
-        const userSharePercentage = userTokenBalanceAtDeath / totalSupplyAtDeath;
-        const solClaimed = userSharePercentage * 0.5; // Mock pool size
-        const tokensClaimed = userSharePercentage * 1000; // Mock token amount
-        
-        return {
-          success: true,
-          signature,
-          solClaimed,
-          tokensClaimed
-        };
+        try {
+          const userClaimsPDA = await this.getUserClaimsPDA(this.wallet.publicKey);
+          
+          const tx = await state.anchorPrograms.lpCustody.methods
+            .claimLpRewards(tokenMint)
+            .accounts({
+              userClaims: userClaimsPDA,
+              tokenMint: tokenMint,
+              claimer: this.wallet.publicKey,
+            })
+            .rpc();
+          
+          // Mark as claimed in context
+          const claimKey = `LP_${tokenMintAddress}`;
+          state.claimedRewards.add(claimKey);
+          
+          // Calculate claimed amounts from transaction logs or fetch updated state
+          const userSharePercentage = userTokenBalanceAtDeath / totalSupplyAtDeath;
+          const solClaimed = userSharePercentage * 0.5; // This should come from actual transaction result
+          const tokensClaimed = userSharePercentage * 1000; // This should come from actual transaction result
+          
+          return {
+            success: true,
+            signature: tx,
+            solClaimed,
+            tokensClaimed
+          };
+        } catch (error) {
+          console.error("Blockchain claim failed:", error);
+          throw error;
+        }
       } else {
-        // Use the existing context claim function
-        console.log("Using context claim function...");
-        const signature = await this.context.claimLPRewards(
-          tokenMint,
-          userTokenBalanceAtDeath,
-          totalSupplyAtDeath
-        );
-        
-        // Calculate mock claimed amounts
-        const userSharePercentage = userTokenBalanceAtDeath / totalSupplyAtDeath;
-        const solClaimed = userSharePercentage * 0.5;
-        const tokensClaimed = userSharePercentage * 1000;
-        
-        return {
-          success: true,
-          signature,
-          solClaimed,
-          tokensClaimed
-        };
+        throw new Error("LP custody program not available");
       }
 
     } catch (error) {

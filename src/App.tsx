@@ -16,9 +16,6 @@ import EnhancedLPClaim from "./components/EnhancedLPClaim"; // Enhanced
 import EnhancedFeeRewards from "./components/EnhancedFeeRewards"; // Enhanced
 import DailyApeOutAwards from "./components/DailyApeOutAwards"; // Enhanced
 
-// Enhanced status components
-import EnhancedProjectStatus from "./components/EnhancedProjectStatus";
-
 import { AppProvider } from "./context/AppContext";
 
 import "./styles.css";
@@ -200,25 +197,10 @@ function App() {
           </section>
         )}
 
+        {/* CLEAN PROJECT STATUS VIEW - Just the main dashboard */}
         {activeView === "status" && (
           <section className="section">
-            <div className="status-grid">
-              {/* Enhanced Status Components */}
-              <EnhancedProjectStatus
-                tokenMint={APEOUT_TOKEN_MINT.toString()}
-                tokenName="ApeOut Token"
-                tokenSymbol="APEOUT"
-              />
-
-              <EnhancedProjectStatus
-                tokenMint={SAMPLE_TOKEN_MINT.toString()}
-                tokenName="Wrapped SOL"
-                tokenSymbol="wSOL"
-              />
-
-              {/* Original Project Status Dashboard */}
-              <ProjectStatusDashboard />
-            </div>
+            <ProjectStatusDashboard />
           </section>
         )}
 

@@ -1,6 +1,5 @@
 // services/dailyGameService.ts
 import { PublicKey } from '@solana/web3.js';
-// Note: Transaction, SystemProgram, BN, etc. will be imported when we implement real contract calls
 import { useAppContext } from '../context/AppContext';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
@@ -92,103 +91,114 @@ class DailyGameService {
    * Get daily game information for a specific day
    */
   async getDailyGameInfo(dayId: number): Promise<DailyGameInfo> {
+    // Calculate date for the day first (outside try block)
+    const baseDate = new Date();
+    baseDate.setDate(baseDate.getDate() - (30 - dayId));
+    const date = baseDate;
+
     try {
       console.log(`🎮 Getting daily game info for day ${dayId}...`);
 
       const { state } = this.context;
 
-      // Calculate date for the day
-      const baseDate = new Date();
-      baseDate.setDate(baseDate.getDate() - (30 - dayId));
-      const date = baseDate;
-
       // Use the enhanced Anchor version if available
       if (state.anchorReady && state.anchorPrograms?.dailyGameVault) {
         console.log("Using real daily game vault...");
         
-        // TODO: Implement real game data fetching
-        // For now, return mock data
-        return this.getMockDailyGameInfo(dayId, date, state);
+        try {
+          // Try to fetch real game data from blockchain
+          const gameVaultPDA = await this.getGameVaultPDA(dayId);
+          const gameData = await state.anchorPrograms.dailyGameVault.account.gameVault.fetch(gameVaultPDA);
+          
+          return this.parseGameDataFromChain(gameData, dayId, date);
+        } catch (error) {
+          console.warn("Failed to fetch game data from chain:", error);
+          return this.getEmptyDailyGameInfo(dayId, date);
+        }
       } else {
-        // Use mock data
-        return this.getMockDailyGameInfo(dayId, date, state);
+        console.log("Anchor not ready or game vault program not available");
+        return this.getEmptyDailyGameInfo(dayId, date);
       }
 
     } catch (error) {
       console.error(`Error getting daily game info for day ${dayId}:`, error);
-      
-      // Return default info
-      const baseDate = new Date();
-      baseDate.setDate(baseDate.getDate() - (30 - dayId));
-      
-      const defaultUserStatus: { [categoryId: number]: UserCategoryStatus } = {};
-      for (const category of this.GAME_CATEGORIES) {
-        defaultUserStatus[category.id] = {
-          isWinner: false,
-          canClaim: false,
-          alreadyClaimed: false,
-          rewardAmount: 0
-        };
-      }
-
-      return {
-        dayId,
-        date: baseDate,
-        totalRewards: 0,
-        categories: this.GAME_CATEGORIES,
-        winners: {},
-        userStatus: defaultUserStatus
-      };
+      return this.getEmptyDailyGameInfo(dayId, date);
     }
   }
 
   /**
-   * Get mock daily game info for testing
+   * Get empty daily game info when no data is available
    */
-  private getMockDailyGameInfo(dayId: number, date: Date, state: any): DailyGameInfo {
-    // Mock total rewards (varies by day)
-    const totalRewards = Math.random() * 2 + 0.5; // 0.5-2.5 SOL
-
-    // Mock winners (some categories have winners, some don't)
-    const winners: { [categoryId: number]: string | null } = {};
+  private getEmptyDailyGameInfo(dayId: number, date: Date): DailyGameInfo {
+    const defaultUserStatus: { [categoryId: number]: UserCategoryStatus } = {};
     for (const category of this.GAME_CATEGORIES) {
-      const hasWinner = Math.random() > 0.3; // 70% chance of having a winner
-      if (hasWinner) {
-        const isUserWinner = Math.random() > 0.8; // 20% chance user is winner
-        winners[category.id] = isUserWinner ? 
-          this.wallet.publicKey?.toString() || null : 
-          PublicKey.unique().toString();
-      } else {
-        winners[category.id] = null;
-      }
-    }
-
-    // Generate user status for each category
-    const userStatus: { [categoryId: number]: UserCategoryStatus } = {};
-    
-    for (const category of this.GAME_CATEGORIES) {
-      const isWinner = winners[category.id] === this.wallet.publicKey?.toString();
-      const rewardAmount = isWinner ? (totalRewards * category.rewardPercentage) / 100 : 0;
-      const alreadyClaimed = state.claimedRewards.has(`GAME_${dayId}_${category.id}`);
-      
-      userStatus[category.id] = {
-        isWinner,
-        canClaim: isWinner && !alreadyClaimed && rewardAmount > 0,
-        alreadyClaimed,
-        rewardAmount,
-        userMetric: Math.random() > 0.5 ? Math.floor(Math.random() * 10000) + 100 : undefined,
-        leaderPosition: Math.random() > 0.5 ? Math.floor(Math.random() * 50) + 1 : undefined
+      defaultUserStatus[category.id] = {
+        isWinner: false,
+        canClaim: false,
+        alreadyClaimed: false,
+        rewardAmount: 0
       };
     }
 
     return {
       dayId,
       date,
-      totalRewards,
+      totalRewards: 0,
+      categories: this.GAME_CATEGORIES,
+      winners: {},
+      userStatus: defaultUserStatus
+    };
+  }
+
+  /**
+   * Parse game data from blockchain
+   */
+  private parseGameDataFromChain(gameData: any, dayId: number, date: Date): DailyGameInfo {
+    const winners: { [categoryId: number]: string | null } = {};
+    const userStatus: { [categoryId: number]: UserCategoryStatus } = {};
+    
+    for (const category of this.GAME_CATEGORIES) {
+      const categoryData = gameData.categories?.[category.id];
+      winners[category.id] = categoryData?.winner?.toString() || null;
+      
+      const isWinner = winners[category.id] === this.wallet.publicKey?.toString();
+      const { state } = this.context;
+      const alreadyClaimed = state.claimedRewards.has(`GAME_${dayId}_${category.id}`);
+      const rewardAmount = isWinner ? (gameData.totalRewards * category.rewardPercentage) / 100 : 0;
+      
+      userStatus[category.id] = {
+        isWinner,
+        canClaim: isWinner && !alreadyClaimed && rewardAmount > 0,
+        alreadyClaimed,
+        rewardAmount,
+        userMetric: categoryData?.userMetric || undefined,
+        leaderPosition: categoryData?.leaderPosition || undefined
+      };
+    }
+
+    return {
+      dayId,
+      date,
+      totalRewards: gameData.totalRewards || 0,
       categories: this.GAME_CATEGORIES,
       winners,
       userStatus
     };
+  }
+
+  /**
+   * Get PDA for game vault
+   */
+  private async getGameVaultPDA(dayId: number): Promise<PublicKey> {
+    const { state } = this.context;
+    const [gameVaultPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('game_vault'),
+        Buffer.from(dayId.toString()),
+      ],
+      state.anchorPrograms.dailyGameVault.programId
+    );
+    return gameVaultPDA;
   }
 
   /**
@@ -213,50 +223,37 @@ class DailyGameService {
       if (state.anchorReady && state.anchorPrograms?.dailyGameVault) {
         console.log("Using real daily game vault...");
         
-        // TODO: Implement real game reward claim
-        // For now, simulate the claim and update context state
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Mark as claimed in context
-        const claimKey = `GAME_${dayId}_${categoryId}`;
-        this.context.setError(null);
-        
-        // Calculate claimed amount
-        const gameInfo = await this.getDailyGameInfo(dayId);
-        const amountClaimed = (gameInfo.totalRewards * category.rewardPercentage) / 100;
-        
-        // Add to claimed rewards
-        state.claimedRewards.add(claimKey);
-        
-        return {
-          success: true,
-          signature: "ANCHOR_GAME_CLAIM_" + Date.now(),
-          category: category.name,
-          amountClaimed
-        };
+        try {
+          const gameVaultPDA = await this.getGameVaultPDA(dayId);
+          
+          const tx = await state.anchorPrograms.dailyGameVault.methods
+            .claimCategoryReward(dayId, categoryId)
+            .accounts({
+              gameVault: gameVaultPDA,
+              claimer: this.wallet.publicKey,
+            })
+            .rpc();
+          
+          // Mark as claimed in context
+          const claimKey = `GAME_${dayId}_${categoryId}`;
+          state.claimedRewards.add(claimKey);
+          
+          // Calculate claimed amount
+          const gameInfo = await this.getDailyGameInfo(dayId);
+          const amountClaimed = (gameInfo.totalRewards * category.rewardPercentage) / 100;
+          
+          return {
+            success: true,
+            signature: tx,
+            category: category.name,
+            amountClaimed
+          };
+        } catch (error) {
+          console.error("Blockchain claim failed:", error);
+          throw error;
+        }
       } else {
-        // Use mock implementation
-        console.log("Using mock game reward claim...");
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Mark as claimed in context
-        const claimKey = `GAME_${dayId}_${categoryId}`;
-        this.context.setError(null);
-        
-        // Calculate claimed amount
-        const gameInfo = await this.getDailyGameInfo(dayId);
-        const amountClaimed = (gameInfo.totalRewards * category.rewardPercentage) / 100;
-        
-        // Add to claimed rewards
-        state.claimedRewards.add(claimKey);
-        
-        return {
-          success: true,
-          signature: "MOCK_GAME_CLAIM_" + Date.now(),
-          category: category.name,
-          amountClaimed
-        };
+        throw new Error("Daily game vault program not available");
       }
 
     } catch (error) {
@@ -353,18 +350,26 @@ class DailyGameService {
     isWinner: boolean;
   }>> {
     try {
-      // TODO: Implement actual leaderboard query
-      // This would query indexed data for trading activity, LP provision, etc.
+      const { state } = this.context;
       
-      // Simulate leaderboard for demo
-      const leaderboard = Array.from({ length: 10 }, (_, i) => ({
-        rank: i + 1,
-        wallet: PublicKey.unique().toString(),
-        metric: Math.floor(Math.random() * 100000) + 1000,
-        isWinner: i === 0 // First place is winner
-      }));
-
-      return leaderboard;
+      if (state.anchorReady && state.anchorPrograms?.dailyGameVault) {
+        // Try to fetch real leaderboard data
+        const gameVaultPDA = await this.getGameVaultPDA(dayId);
+        const gameData = await state.anchorPrograms.dailyGameVault.account.gameVault.fetch(gameVaultPDA);
+        
+        const categoryData = gameData.categories?.[categoryId];
+        if (categoryData?.leaderboard) {
+          return categoryData.leaderboard.map((entry: any, index: number) => ({
+            rank: index + 1,
+            wallet: entry.wallet.toString(),
+            metric: entry.metric || 0,
+            isWinner: index === 0
+          }));
+        }
+      }
+      
+      // Return empty leaderboard if no data available
+      return [];
     } catch (error) {
       console.error("Error getting leaderboard:", error);
       return [];

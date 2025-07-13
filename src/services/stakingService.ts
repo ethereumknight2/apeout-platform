@@ -1,6 +1,5 @@
 // services/stakingService.ts
 import { PublicKey } from '@solana/web3.js';
-// Note: Transaction, SystemProgram, BN, etc. will be imported when we implement real contract calls
 import { useAppContext } from '../context/AppContext';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
@@ -29,32 +28,130 @@ class StakingService {
   }
 
   /**
-   * Get user's staking information
+   * Get user's staking information from blockchain
    */
   async getStakingInfo(): Promise<StakingInfo> {
     try {
       const { state } = this.context;
       
-      // Use the existing context state
-      const stakedAmount = state.stakedAmount || 0;
-      const availableBalance = state.apeoutBalance || 0;
-      const stakingTier = state.userStakingTier || 'Bronze';
-      const multiplier = state.stakingMultiplier || 1.0;
+      if (!this.wallet.publicKey) {
+        return this.getEmptyStakingInfo();
+      }
 
-      return {
-        stakedAmount,
-        stakingTier: stakingTier as 'Bronze' | 'Silver' | 'Gold' | 'Diamond',
-        multiplier,
-        availableBalance
-      };
+      // Use blockchain data if available
+      if (state.anchorReady && state.anchorPrograms?.apeoutStaking) {
+        console.log("Fetching staking info from blockchain...");
+        
+        try {
+          const userStakePDA = await this.getUserStakePDA(this.wallet.publicKey);
+          const stakeData = await state.anchorPrograms.apeoutStaking.account.userStake.fetch(userStakePDA);
+          
+          const stakedAmount = stakeData.stakedAmount.toNumber();
+          const stakingTier = this.calculateTier(stakedAmount);
+          const multiplier = this.getMultiplierForTier(stakingTier);
+          
+          // Get available balance from token account
+          const availableBalance = await this.getTokenBalance();
+          
+          return {
+            stakedAmount,
+            stakingTier,
+            multiplier,
+            availableBalance
+          };
+        } catch (error) {
+          console.warn("Failed to fetch staking data from chain:", error);
+          // If user stake account doesn't exist, return empty with available balance
+          const availableBalance = await this.getTokenBalance();
+          return {
+            stakedAmount: 0,
+            stakingTier: 'Bronze',
+            multiplier: 1.0,
+            availableBalance
+          };
+        }
+      } else {
+        console.log("Anchor not ready or staking program not available");
+        return this.getEmptyStakingInfo();
+      }
     } catch (error) {
       console.error("Error getting staking info:", error);
-      return {
-        stakedAmount: 0,
-        stakingTier: 'Bronze',
-        multiplier: 1.0,
-        availableBalance: 0
-      };
+      return this.getEmptyStakingInfo();
+    }
+  }
+
+  /**
+   * Get empty staking info when no data is available
+   */
+  private getEmptyStakingInfo(): StakingInfo {
+    return {
+      stakedAmount: 0,
+      stakingTier: 'Bronze',
+      multiplier: 1.0,
+      availableBalance: 0
+    };
+  }
+
+  /**
+   * Get user's token balance
+   */
+  private async getTokenBalance(): Promise<number> {
+    try {
+      if (!this.wallet.publicKey) return 0;
+      
+      // TODO: Replace with actual APEOUT token mint
+      const APEOUT_MINT = new PublicKey("YOUR_APEOUT_TOKEN_MINT_HERE");
+      
+      // Get associated token account
+      const { getAssociatedTokenAddress } = await import('@solana/spl-token');
+      const tokenAccount = await getAssociatedTokenAddress(
+        APEOUT_MINT,
+        this.wallet.publicKey
+      );
+      
+      const accountInfo = await this.connection.getTokenAccountBalance(tokenAccount);
+      return accountInfo.value.uiAmount || 0;
+    } catch (error) {
+      console.warn("Could not fetch token balance:", error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get PDA for user stake account
+   */
+  private async getUserStakePDA(userPubkey: PublicKey): Promise<PublicKey> {
+    const { state } = this.context;
+    const [userStakePDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('user_stake'),
+        userPubkey.toBuffer(),
+      ],
+      state.anchorPrograms.apeoutStaking.programId
+    );
+    return userStakePDA;
+  }
+
+  /**
+   * Calculate staking tier based on staked amount
+   */
+  private calculateTier(stakedAmount: number): 'Bronze' | 'Silver' | 'Gold' | 'Diamond' {
+    if (stakedAmount >= 5000) return 'Diamond';
+    if (stakedAmount >= 1000) return 'Gold';
+    if (stakedAmount >= 100) return 'Silver';
+    return 'Bronze';
+  }
+
+  /**
+   * Get multiplier for a given tier
+   */
+  private getMultiplierForTier(tier: string): number {
+    switch (tier) {
+      case 'Diamond': return 2.0;
+      case 'Gold': return 1.5;
+      case 'Silver': return 1.1;
+      case 'Bronze': return 1.0;
+      default: return 1.0;
     }
   }
 
@@ -75,23 +172,37 @@ class StakingService {
       if (state.anchorReady && state.anchorPrograms?.apeoutStaking) {
         console.log("Using real Anchor staking...");
         
-        // TODO: Implement real staking call when contract is ready
-        // For now, use the context's existing staking function
-        await this.context.stakeTokens(amount);
-        
-        return {
-          success: true,
-          signature: "ANCHOR_STAKE_" + Date.now()
-        };
+        try {
+          const userStakePDA = await this.getUserStakePDA(this.wallet.publicKey);
+          
+          // TODO: Replace with actual APEOUT token mint and accounts
+          const APEOUT_MINT = new PublicKey("YOUR_APEOUT_TOKEN_MINT_HERE");
+          const { getAssociatedTokenAddress } = await import('@solana/spl-token');
+          const userTokenAccount = await getAssociatedTokenAddress(
+            APEOUT_MINT,
+            this.wallet.publicKey
+          );
+          
+          const tx = await state.anchorPrograms.apeoutStaking.methods
+            .stakeTokens(new (await import('@coral-xyz/anchor')).BN(amount * 1e9)) // Convert to base units
+            .accounts({
+              userStake: userStakePDA,
+              userTokenAccount: userTokenAccount,
+              tokenMint: APEOUT_MINT,
+              staker: this.wallet.publicKey,
+            })
+            .rpc();
+          
+          return {
+            success: true,
+            signature: tx
+          };
+        } catch (error) {
+          console.error("Blockchain staking failed:", error);
+          throw error;
+        }
       } else {
-        // Use the existing context staking function
-        console.log("Using context staking function...");
-        await this.context.stakeTokens(amount);
-        
-        return {
-          success: true,
-          signature: "MOCK_STAKE_" + Date.now()
-        };
+        throw new Error("Staking program not available");
       }
 
     } catch (error) {
@@ -120,23 +231,37 @@ class StakingService {
       if (state.anchorReady && state.anchorPrograms?.apeoutStaking) {
         console.log("Using real Anchor unstaking...");
         
-        // TODO: Implement real unstaking call when contract is ready
-        // For now, use the context's existing unstaking function
-        await this.context.unstakeTokens(amount);
-        
-        return {
-          success: true,
-          signature: "ANCHOR_UNSTAKE_" + Date.now()
-        };
+        try {
+          const userStakePDA = await this.getUserStakePDA(this.wallet.publicKey);
+          
+          // TODO: Replace with actual APEOUT token mint and accounts
+          const APEOUT_MINT = new PublicKey("YOUR_APEOUT_TOKEN_MINT_HERE");
+          const { getAssociatedTokenAddress } = await import('@solana/spl-token');
+          const userTokenAccount = await getAssociatedTokenAddress(
+            APEOUT_MINT,
+            this.wallet.publicKey
+          );
+          
+          const tx = await state.anchorPrograms.apeoutStaking.methods
+            .unstakeTokens(new (await import('@coral-xyz/anchor')).BN(amount * 1e9)) // Convert to base units
+            .accounts({
+              userStake: userStakePDA,
+              userTokenAccount: userTokenAccount,
+              tokenMint: APEOUT_MINT,
+              staker: this.wallet.publicKey,
+            })
+            .rpc();
+          
+          return {
+            success: true,
+            signature: tx
+          };
+        } catch (error) {
+          console.error("Blockchain unstaking failed:", error);
+          throw error;
+        }
       } else {
-        // Use the existing context unstaking function
-        console.log("Using context unstaking function...");
-        await this.context.unstakeTokens(amount);
-        
-        return {
-          success: true,
-          signature: "MOCK_UNSTAKE_" + Date.now()
-        };
+        throw new Error("Staking program not available");
       }
 
     } catch (error) {

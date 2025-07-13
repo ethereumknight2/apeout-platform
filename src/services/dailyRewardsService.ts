@@ -1,6 +1,5 @@
 // services/dailyRewardsService.ts
 import { PublicKey } from '@solana/web3.js';
-// Note: Transaction, SystemProgram, BN, etc. will be imported when we implement real contract calls
 import { useAppContext } from '../context/AppContext';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
@@ -38,73 +37,75 @@ class DailyRewardsService {
    * Get reward information for a specific day
    */
   async getDayRewardInfo(dayId: number): Promise<DailyRewardInfo> {
+    // Calculate date for the day first (outside try block)
+    const baseDate = new Date();
+    baseDate.setDate(baseDate.getDate() - (30 - dayId));
+    const date = baseDate;
+
     try {
       console.log(`🎁 Getting reward info for day ${dayId}...`);
 
       const { state } = this.context;
-      
-      // Calculate date for the day
-      const baseDate = new Date();
-      baseDate.setDate(baseDate.getDate() - (30 - dayId));
-      const date = baseDate;
 
       // Use the enhanced Anchor version if available
       if (state.anchorReady && state.anchorPrograms?.feeRewards) {
         console.log("Using real fee rewards contract...");
         
-        // TODO: Implement real reward fetching
-        // For now, return mock data
-        return this.getMockDayRewardInfo(dayId, date, state);
+        try {
+          const rewardVaultPDA = await this.getRewardVaultPDA(dayId);
+          const rewardData = await state.anchorPrograms.feeRewards.account.rewardVault.fetch(rewardVaultPDA);
+          
+          return this.parseRewardDataFromChain(rewardData, dayId, date, state);
+        } catch (error) {
+          console.warn("Failed to fetch reward data from chain:", error);
+          return this.getEmptyRewardInfo(dayId, date);
+        }
       } else {
-        // Use mock data
-        return this.getMockDayRewardInfo(dayId, date, state);
+        console.log("Anchor not ready or fee rewards program not available");
+        return this.getEmptyRewardInfo(dayId, date);
       }
 
     } catch (error) {
       console.error(`Error getting day ${dayId} reward info:`, error);
-      
-      // Return default info
-      const baseDate = new Date();
-      baseDate.setDate(baseDate.getDate() - (30 - dayId));
-      
-      return {
-        dayId,
-        date: baseDate,
-        isEligible: false,
-        rewardAmount: 0,
-        userTokenBalance: 0,
-        stakingMultiplier: 1.0,
-        stakingTier: 'Bronze',
-        alreadyClaimed: false,
-        claimDeadline: new Date(baseDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-      };
+      return this.getEmptyRewardInfo(dayId, date);
     }
   }
 
   /**
-   * Get mock reward info for testing
+   * Get empty reward info when no data is available
    */
-  private getMockDayRewardInfo(dayId: number, date: Date, state: any): DailyRewardInfo {
-    // Get user's trading activity for this day (simplified)
-    const hasTraded = Math.random() > 0.3; // 70% chance of having traded
-    const userTokenBalance = hasTraded ? Math.floor(Math.random() * 100000) + 1000 : 0;
+  private getEmptyRewardInfo(dayId: number, date: Date): DailyRewardInfo {
+    return {
+      dayId,
+      date,
+      isEligible: false,
+      rewardAmount: 0,
+      userTokenBalance: 0,
+      stakingMultiplier: 1.0,
+      stakingTier: 'Bronze',
+      alreadyClaimed: false,
+      claimDeadline: new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000)
+    };
+  }
 
+  /**
+   * Parse reward data from blockchain
+   */
+  private parseRewardDataFromChain(rewardData: any, dayId: number, date: Date, state: any): DailyRewardInfo {
+    const userKey = this.wallet.publicKey?.toString();
+    const userReward = userKey ? rewardData.userRewards?.[userKey] : null;
+    
+    const isEligible = userReward ? userReward.isEligible : false;
+    const userTokenBalance = userReward ? userReward.tokenBalance : 0;
+    const rewardAmount = userReward ? userReward.rewardAmount / 1e9 : 0; // Convert lamports to SOL
+    
     // Get staking info from context
     const stakingMultiplier = state.stakingMultiplier || 1.0;
     const stakingTier = state.userStakingTier || 'Bronze';
-
-    // Calculate reward amount
-    let rewardAmount = 0;
-    if (hasTraded) {
-      const baseReward = 0.001; // Base 0.001 SOL
-      const userShare = userTokenBalance / 1000000; // Mock total supply
-      const scaledReward = baseReward * userShare * 1000; // Scale up for visibility
-      rewardAmount = scaledReward * stakingMultiplier;
-    }
-
+    
     // Check if already claimed
     const alreadyClaimed = state.claimedRewards.has(`FEE_${dayId}`);
-
+    
     // Claim deadline (7 days after the day)
     const claimDeadline = new Date(date);
     claimDeadline.setDate(claimDeadline.getDate() + 7);
@@ -112,7 +113,7 @@ class DailyRewardsService {
     return {
       dayId,
       date,
-      isEligible: hasTraded,
+      isEligible,
       rewardAmount,
       userTokenBalance,
       stakingMultiplier,
@@ -120,6 +121,21 @@ class DailyRewardsService {
       alreadyClaimed,
       claimDeadline
     };
+  }
+
+  /**
+   * Get PDA for reward vault
+   */
+  private async getRewardVaultPDA(dayId: number): Promise<PublicKey> {
+    const { state } = this.context;
+    const [rewardVaultPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('reward_vault'),
+        Buffer.from(dayId.toString()),
+      ],
+      state.anchorPrograms.feeRewards.programId
+    );
+    return rewardVaultPDA;
   }
 
   /**
@@ -157,41 +173,36 @@ class DailyRewardsService {
       if (state.anchorReady && state.anchorPrograms?.feeRewards) {
         console.log("Using real fee rewards contract...");
         
-        // TODO: Implement real reward claim
-        // For now, use the context's existing claim function
-        const signature = await this.context.claimFeeRewards(
-          dayId,
-          50000, // Mock user balance
-          1000000 // Mock total supply
-        );
-        
-        // Get the reward amount
-        const rewardInfo = await this.getDayRewardInfo(dayId);
-        const amountClaimed = rewardInfo.rewardAmount;
-        
-        return {
-          success: true,
-          signature,
-          amountClaimed
-        };
+        try {
+          const rewardVaultPDA = await this.getRewardVaultPDA(dayId);
+          
+          const tx = await state.anchorPrograms.feeRewards.methods
+            .claimDayReward(dayId)
+            .accounts({
+              rewardVault: rewardVaultPDA,
+              claimer: this.wallet.publicKey,
+            })
+            .rpc();
+          
+          // Mark as claimed in context
+          const claimKey = `FEE_${dayId}`;
+          state.claimedRewards.add(claimKey);
+          
+          // Get the reward amount
+          const rewardInfo = await this.getDayRewardInfo(dayId);
+          const amountClaimed = rewardInfo.rewardAmount;
+          
+          return {
+            success: true,
+            signature: tx,
+            amountClaimed
+          };
+        } catch (error) {
+          console.error("Blockchain claim failed:", error);
+          throw error;
+        }
       } else {
-        // Use the existing context claim function
-        console.log("Using context claim function...");
-        const signature = await this.context.claimFeeRewards(
-          dayId,
-          50000, // Mock user balance
-          1000000 // Mock total supply
-        );
-        
-        // Get the reward amount
-        const rewardInfo = await this.getDayRewardInfo(dayId);
-        const amountClaimed = rewardInfo.rewardAmount;
-        
-        return {
-          success: true,
-          signature,
-          amountClaimed
-        };
+        throw new Error("Fee rewards program not available");
       }
 
     } catch (error) {

@@ -21,7 +21,7 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({
   const [swapMode, setSwapMode] = useState<"buy" | "sell">("buy");
   const [solAmount, setSolAmount] = useState("");
   const [tokenAmount, setTokenAmount] = useState("");
-  const [slippage, setSlippage] = useState(1); // 1% default
+  const [slippage, setSlippage] = useState(1);
   const [customSlippage, setCustomSlippage] = useState("");
   const [showCustomSlippage, setShowCustomSlippage] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -247,10 +247,11 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({
                       className="token-image"
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
-                        const fallback =
-                          target.nextElementSibling as HTMLElement;
-                        target.style.display = "none";
-                        if (fallback) fallback.style.display = "flex";
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) {
+                          target.style.display = "none";
+                          fallback.style.display = "flex";
+                        }
                       }}
                     />
                     <div className="token-fallback" style={{ display: "none" }}>
@@ -418,10 +419,11 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({
                       className="token-image"
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement;
-                        const fallback =
-                          target.nextElementSibling as HTMLElement;
-                        target.style.display = "none";
-                        if (fallback) fallback.style.display = "flex";
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) {
+                          target.style.display = "none";
+                          fallback.style.display = "flex";
+                        }
                       }}
                     />
                     <div className="token-fallback" style={{ display: "none" }}>
